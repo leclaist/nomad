@@ -3315,6 +3315,10 @@ type TaskGroup struct {
 	// ReschedulePolicy is used to configure how the scheduler should
 	// retry failed allocations.
 	ReschedulePolicy *ReschedulePolicy
+
+	// Affinities can be specified at the task group level to express
+	// scheduling preferences.
+	Affinities []*Affinity
 }
 
 func (tg *TaskGroup) Copy() *TaskGroup {
@@ -3327,6 +3331,7 @@ func (tg *TaskGroup) Copy() *TaskGroup {
 	ntg.Constraints = CopySliceConstraints(ntg.Constraints)
 	ntg.RestartPolicy = ntg.RestartPolicy.Copy()
 	ntg.ReschedulePolicy = ntg.ReschedulePolicy.Copy()
+	ntg.Affinities = CopySliceAffinities(ntg.Affinities)
 
 	if tg.Tasks != nil {
 		tasks := make([]*Task, len(ntg.Tasks))
@@ -3404,6 +3409,13 @@ func (tg *TaskGroup) Validate(j *Job) error {
 	for idx, constr := range tg.Constraints {
 		if err := constr.Validate(); err != nil {
 			outer := fmt.Errorf("Constraint %d validation failed: %s", idx+1, err)
+			mErr.Errors = append(mErr.Errors, outer)
+		}
+	}
+
+	for idx, affinity := range tg.Affinities {
+		if err := affinity.Validate(); err != nil {
+			outer := fmt.Errorf("Affinity %d validation failed: %s", idx+1, err)
 			mErr.Errors = append(mErr.Errors, outer)
 		}
 	}
@@ -5287,7 +5299,7 @@ func (a *Affinity) String() string {
 	if a.str != "" {
 		return a.str
 	}
-	a.str = fmt.Sprintf("%s %s %s", a.LTarget, a.Operand, a.RTarget)
+	a.str = fmt.Sprintf("%s %s %s %s", a.LTarget, a.Operand, a.RTarget, a.Weight)
 	return a.str
 }
 
