@@ -29,6 +29,7 @@ var (
 		"java":     NewJavaDriver,
 		"qemu":     NewQemuDriver,
 		"rkt":      NewRktDriver,
+		"libvirt":  NewLibvirtDriver
 	}
 
 	// DriverStatsNotImplemented is the error to be returned if a driver doesn't
